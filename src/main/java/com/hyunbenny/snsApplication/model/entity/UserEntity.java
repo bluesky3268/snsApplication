@@ -18,6 +18,9 @@ public class UserEntity {
     private String username;
     private String password;
 
+    public UserEntity() {
+    }
+
     @Builder
     public UserEntity(Long id, String username, String password) {
         this.id = id;
