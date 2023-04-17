@@ -1,5 +1,6 @@
 package com.hyunbenny.snsApplication.service;
 
+import com.hyunbenny.snsApplication.exception.ErrorCode;
 import com.hyunbenny.snsApplication.exception.SnsApplicationException;
 import com.hyunbenny.snsApplication.fixture.UserFixture;
 
@@ -53,7 +54,9 @@ public class UserServiceTest {
         when(bCryptPasswordEncoder.encode(password)).thenReturn("encrypted_password");
         when(userEntityRepository.save(any())).thenReturn(Optional.of(fixture));
 
-        Assertions.assertThrows(SnsApplicationException.class, () -> userService.join(username, password));
+        SnsApplicationException exception = Assertions.assertThrows(SnsApplicationException.class, () -> userService.join(username, password));
+        Assertions.assertEquals(ErrorCode.DUPLICATED_USER_NAME, exception.getErrorCode());
+
     }
 
     @Test
@@ -64,6 +67,7 @@ public class UserServiceTest {
         UserEntity fixture = UserFixture.getUserEntity(username, password);
 
         when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(fixture));
+        when(bCryptPasswordEncoder.matches(password, fixture.getPassword())).thenReturn(true);
 
         Assertions.assertDoesNotThrow(() -> userService.login(username, password));
     }
@@ -75,7 +79,9 @@ public class UserServiceTest {
 
         when(userEntityRepository.findByUsername(username)).thenReturn(Optional.empty());
 
-        Assertions.assertThrows(SnsApplicationException.class, () -> userService.login(username, password));
+        SnsApplicationException exception = Assertions.assertThrows(SnsApplicationException.class, () -> userService.login(username, password));
+        Assertions.assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
+
     }
 
     @Test
@@ -88,7 +94,8 @@ public class UserServiceTest {
 
         when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(fixture));
 
-        Assertions.assertThrows(SnsApplicationException.class, () -> userService.login(username, wrongPassword));
+        SnsApplicationException exception = Assertions.assertThrows(SnsApplicationException.class, () -> userService.login(username, wrongPassword));
+        Assertions.assertEquals(ErrorCode.INVALID_PASSWORD, exception.getErrorCode());
     }
 
 

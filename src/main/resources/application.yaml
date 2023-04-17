@@ -15,3 +15,8 @@ spring.jpa:
     hibernate:
       format_sql: true
       show-sql: true
+
+jwt:
+  token:
+    secretKey : hyunbenny_sns_app_2023_04_17_151600.secret_key
+    expiredMs : 2592000000
