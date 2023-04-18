@@ -49,6 +49,13 @@ public class UserEntity {
         createdAt();
     }
 
+    public UserEntity(Long id, String username, String password) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        createdAt();
+    }
+
     @PrePersist
     public void createdAt() {
         this.createdAt = Timestamp.from(Instant.now());
@@ -64,12 +71,12 @@ public class UserEntity {
         return userEntity;
     }
 
-    public void setIdForTest(Long id) {
-        this.id = id;
+    public static UserEntity of(Long id, String username, String password) {
+        UserEntity userEntity = new UserEntity(id, username, password);
+        return userEntity;
     }
-    public void setUsernameForTest(String username) {this.username = username;}
-    public void changePassword(String password) {this.password = password;}
 
+    public void changePassword(String password) {this.password = password;}
 
 
     @Override

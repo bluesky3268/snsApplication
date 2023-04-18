@@ -5,14 +5,7 @@ import com.hyunbenny.snsApplication.model.entity.UserEntity;
 
 public class UserFixture {
     public static UserEntity getUserEntity(String username, String password) {
-        UserEntity userEntity = new UserEntity();
-        userEntity.setIdForTest(1L);
-        userEntity.setUsernameForTest(username);
-        userEntity.changePassword(password);
-        userEntity.createdAt();
-
-        System.out.println("fixture : " + userEntity);
-
+        UserEntity userEntity = UserEntity.of(1L, username, password);
         return userEntity;
     }
 }
