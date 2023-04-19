@@ -7,6 +7,7 @@ import org.hibernate.annotations.Where;
 import javax.persistence.*;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Objects;
 
 @Entity
 @Table(name = "\"post\"")
@@ -48,7 +49,18 @@ public class PostEntity {
         this.updatedAt = Timestamp.from(Instant.now());
     }
 
+
+    public PostEntity() {}
+
     public PostEntity(String title, String content, UserEntity user) {
+        this.title = title;
+        this.content = content;
+        this.user = user;
+        createdAt();
+    }
+
+    public PostEntity(Long id, String title, String content, UserEntity user) {
+        this.id = id;
         this.title = title;
         this.content = content;
         this.user = user;
@@ -58,5 +70,41 @@ public class PostEntity {
     public static PostEntity of(String title, String content, UserEntity user) {
         PostEntity entity = new PostEntity(title, content, user);
         return entity;
+    }
+
+    public static PostEntity of(Long id, String title, String content, UserEntity user) {
+        return new PostEntity(id, title, content, user);
+    }
+
+    public void updatePost(String title, String content) {
+        this.title = title;
+        this.content = content;
+        updatedAt();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PostEntity that = (PostEntity) o;
+        return Objects.equals(this.getId(), that.getId()) && Objects.equals(this.getUser(), that.getUser());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getId(), this.getUser());
+    }
+
+    @Override
+    public String toString() {
+        return "PostEntity{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", content='" + content + '\'' +
+                ", user=" + user +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", deletedAt=" + deletedAt +
+                '}';
     }
 }

@@ -47,7 +47,6 @@ public class UserService {
         return User.fromEntity(userEntity);
     }
 
-    //TODO : 로그인 기능 구현
     public String login(String username, String password) {
         // 가입한 유저인지 확인
         UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(()

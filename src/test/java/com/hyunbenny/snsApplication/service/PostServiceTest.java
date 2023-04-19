@@ -2,6 +2,7 @@ package com.hyunbenny.snsApplication.service;
 
 import com.hyunbenny.snsApplication.exception.ErrorCode;
 import com.hyunbenny.snsApplication.exception.SnsApplicationException;
+import com.hyunbenny.snsApplication.fixture.PostFixture;
 import com.hyunbenny.snsApplication.fixture.UserFixture;
 import com.hyunbenny.snsApplication.model.entity.PostEntity;
 import com.hyunbenny.snsApplication.model.entity.UserEntity;
@@ -55,6 +56,74 @@ public class PostServiceTest {
 
         SnsApplicationException exception = Assertions.assertThrows(SnsApplicationException.class, () -> postService.create(title, content, username));
         Assertions.assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    void 포스트수정_성공(){
+        // userInfo
+        Long userId = 1L;
+        String username = "username";
+        String password = "password";
+
+        // oldPostInfo
+        Long postId = 1L;
+        String title = "test title";
+        String content = "test content";
+
+        // newPostInfo
+        String modiTitle = "modi title";
+        String modiContent = "modi content";
+
+        PostEntity postFixture = PostFixture.getPostEntity(postId, title, content, userId, username, password);
+        UserEntity userFixture = postFixture.getUser();
+
+        PostEntity modiPostFixture = PostFixture.getPostEntity(postId, modiTitle, modiContent, userId, username, password);
+
+        when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(userFixture));
+        when(postEntityRepository.findById(postId)).thenReturn(Optional.of(postFixture));
+        when(postEntityRepository.saveAndFlush(modiPostFixture)).thenReturn(modiPostFixture);
+
+        Assertions.assertDoesNotThrow(() -> postService.modify(postId, modiTitle, modiContent, username));
+    }
+
+    @Test
+    void 포스트수정_해당_포스트가_존재하지_않는_경우(){
+        Long postId = 1L;
+        String title = "test title";
+        String content = "test content";
+        Long userId = 1L;
+        String username = "username";
+        String password = "password";
+
+        PostEntity postFixture = PostFixture.getPostEntity(postId, title, content, userId, username, password);
+        UserEntity userFixture = postFixture.getUser();
+
+        when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(userFixture));
+        when(postEntityRepository.findById(postId)).thenReturn(Optional.empty());
+
+        SnsApplicationException exception = Assertions.assertThrows(SnsApplicationException.class, () -> postService.modify(postId, title, content, username));
+        Assertions.assertEquals(ErrorCode.POST_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    void 포스트수정_권한이_없는_경우(){
+        Long postId = 1L;
+        String title = "test title";
+        String content = "test content";
+        Long userId = 1L;
+        String username = "username";
+        String password = "password";
+
+        PostEntity postFixture = PostFixture.getPostEntity(postId, title, content, userId, username, password);
+        UserEntity userFixture = postFixture.getUser();
+
+        UserEntity writer = UserFixture.getUserEntity(2L, "wrongUsername", "password");
+
+        when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(writer));
+        when(postEntityRepository.findById(postId)).thenReturn(Optional.of(postFixture));
+
+        SnsApplicationException exception = Assertions.assertThrows(SnsApplicationException.class, () -> postService.modify(postId, title, content, username));
+        Assertions.assertEquals(ErrorCode.INVALID_PERMISSION, exception.getErrorCode());
     }
 
 }
