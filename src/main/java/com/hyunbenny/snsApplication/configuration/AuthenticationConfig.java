@@ -22,11 +22,11 @@ public class AuthenticationConfig extends WebSecurityConfigurerAdapter {
     @Value("${jwt.token.secretKey}")
     private String key;
 
-    @Override
-    public void configure(WebSecurity web) throws Exception {
-        web.ignoring().regexMatchers("^(?!/api/).*");
-
-    }
+//    @Override
+//    public void configure(WebSecurity web) throws Exception {
+//        web.ignoring().regexMatchers("^(?!/api/).*");
+//
+//    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -34,7 +34,7 @@ public class AuthenticationConfig extends WebSecurityConfigurerAdapter {
                 .authorizeHttpRequests()
                 .antMatchers("/api/*/users/join", "/api/*/users/login").permitAll()
                 .antMatchers("/api/**").authenticated()
-                .anyRequest().permitAll()
+//                .anyRequest().permitAll()
 
                 .and()
                 .sessionManagement()

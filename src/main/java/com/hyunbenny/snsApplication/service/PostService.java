@@ -9,8 +9,12 @@ import com.hyunbenny.snsApplication.repository.PostEntityRepository;
 import com.hyunbenny.snsApplication.repository.UserEntityRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -68,5 +72,21 @@ public class PostService {
 
         // 삭제
         postEntityRepository.deleteById(postId);
+    }
+
+    public Page<Post> getFeeds(Pageable pageable) {
+        Page<PostEntity> feeds = postEntityRepository.findAll(pageable);
+        return feeds.map(Post::fromPostEntity);
+    }
+
+    public Page<Post> getMyPosts(String username, Pageable pageable) {
+        // 유저가 있는 지 확인
+        UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(() ->
+                new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username)));
+
+        // 유저가 있으면 해당 유저가 작성한 포스트 모두 가져오기
+        Page<PostEntity> myPosts = postEntityRepository.findAllByUser(userEntity, pageable);
+
+        return myPosts.map(Post::fromPostEntity);
     }
 }
