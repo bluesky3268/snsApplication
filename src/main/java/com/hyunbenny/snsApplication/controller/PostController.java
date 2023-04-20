@@ -20,7 +20,8 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping
-    public Response<Void> createPost(@RequestBody PostCreateRequest request, Authentication authentication) {
+    public Response<Void> createPost(@RequestBody PostCreateRequest request,
+                                     Authentication authentication) {
         postService.create(request.getTitle(), request.getContent(), authentication.getName());
         return Response.success();
     }
@@ -30,7 +31,13 @@ public class PostController {
                                      @RequestBody PostModifyRequest request,
                                      Authentication authentication) {
         Post post = postService.modify(postId, request.getTitle(), request.getContent(), authentication.getName());
-        log.info("post : {}", post);
         return Response.success(PostModifyResponse.fromPost(post));
+    }
+
+    @DeleteMapping("/{postId}")
+    public Response<Void> modifyPost(@PathVariable Long postId,
+                                    Authentication authentication) {
+        postService.delete(postId, authentication.getName());
+        return Response.success();
     }
 }

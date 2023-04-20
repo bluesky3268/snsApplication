@@ -38,15 +38,35 @@ public class PostService {
         
         // 게시글이 존재하는 지 확인
         PostEntity postEntity = postEntityRepository.findById(postId).orElseThrow(() ->
-                new SnsApplicationException(ErrorCode.POST_NOT_FOUND, String.format("$s not found", postId)));
+                new SnsApplicationException(ErrorCode.POST_NOT_FOUND, String.format("%s not found", postId)));
 
         // 게시글 작성자 == username 확인
         if (postEntity.getUser() != userEntity) {
             throw new SnsApplicationException(ErrorCode.INVALID_PERMISSION, String.format("$s does not have permission for %s", username, postId));
         }
 
+        // 포스트 수정
         postEntity.updatePost(title, content);
 
         return Post.fromPostEntity(postEntityRepository.saveAndFlush(postEntity));
+    }
+
+    @Transactional
+    public void delete(Long postId, String username) {
+        // 유저가 있는 지 확인
+        UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(() ->
+                new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username)));
+
+        // 게시글이 존재하는 지 확인
+        PostEntity postEntity = postEntityRepository.findById(postId).orElseThrow(() ->
+                new SnsApplicationException(ErrorCode.POST_NOT_FOUND, String.format("%s not found", postId)));
+
+//         게시글 작성자 == username 확인
+        if (postEntity.getUser() != userEntity) {
+            throw new SnsApplicationException(ErrorCode.INVALID_PERMISSION, String.format("%s does not have permission for %s", username, postId));
+        }
+
+        // 삭제
+        postEntityRepository.deleteById(postId);
     }
 }

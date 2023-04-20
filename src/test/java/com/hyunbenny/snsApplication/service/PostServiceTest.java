@@ -10,7 +10,6 @@ import com.hyunbenny.snsApplication.repository.PostEntityRepository;
 import com.hyunbenny.snsApplication.repository.UserEntityRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -123,6 +122,58 @@ public class PostServiceTest {
         when(postEntityRepository.findById(postId)).thenReturn(Optional.of(postFixture));
 
         SnsApplicationException exception = Assertions.assertThrows(SnsApplicationException.class, () -> postService.modify(postId, title, content, username));
+        Assertions.assertEquals(ErrorCode.INVALID_PERMISSION, exception.getErrorCode());
+    }
+
+    @Test
+    void 포스트삭제_성공(){
+        PostEntity post = PostFixture.getPostEntity(1L, "title", "content", 1L, "user", "password");
+        UserEntity user = post.getUser();
+
+        when(userEntityRepository.findByUsername(any())).thenReturn(Optional.of(user));
+        when(postEntityRepository.findById(post.getId())).thenReturn(Optional.of(post));
+
+        Assertions.assertDoesNotThrow(() -> postService.delete(post.getId(), user.getUsername()));
+    }
+
+    @Test
+    void 포스트삭제_해당_유저가_없는_경우(){
+        Long postId = 1L;
+        String username = "user";
+
+        when(userEntityRepository.findByUsername(any())).thenReturn(Optional.empty());
+
+        SnsApplicationException exception = Assertions.assertThrows(SnsApplicationException.class, () -> postService.delete(postId, username));
+        Assertions.assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    void 포스트삭제_해당_포스트가_존재하지_않는_경우(){
+        Long postId = 1L;
+        String username = "user";
+
+        PostEntity post = PostFixture.getPostEntity(postId, "title", "content", 1L, username, "password");
+        UserEntity user = post.getUser();
+
+        when(userEntityRepository.findByUsername(any())).thenReturn(Optional.of(user));
+        when(postEntityRepository.findById(post.getId())).thenReturn(Optional.empty());
+
+        SnsApplicationException exception = Assertions.assertThrows(SnsApplicationException.class, () -> postService.delete(postId, username));
+        Assertions.assertEquals(ErrorCode.POST_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    void 포스트삭제_권한이_없는_경우(){
+        Long postId = 1L;
+        String username = "user";
+
+        PostEntity post = PostFixture.getPostEntity(postId, "title", "content", 1L, username, "password");
+        UserEntity writer = UserFixture.getUserEntity(2L, "wrongUsername", "password");
+
+        when(userEntityRepository.findByUsername(any())).thenReturn(Optional.of(writer));
+        when(postEntityRepository.findById(postId)).thenReturn(Optional.of(post));
+
+        SnsApplicationException exception = Assertions.assertThrows(SnsApplicationException.class, () -> postService.delete(postId, username));
         Assertions.assertEquals(ErrorCode.INVALID_PERMISSION, exception.getErrorCode());
     }
 

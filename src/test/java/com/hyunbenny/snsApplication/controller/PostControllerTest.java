@@ -26,8 +26,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -138,4 +137,62 @@ public class PostControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    @WithMockUser
+    void 포스트삭제_성공() throws Exception {
+        // given
+        Long postId = 1L;
+
+
+        // expected
+        mockMvc.perform(delete("/api/v1/posts/" + postId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void 포스트삭제_로그인하지않은_경우_실패() throws Exception {
+        // given
+        Long postId = 1L;
+
+        // expected
+        mockMvc.perform(delete("/api/v1/posts/" + postId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser
+    void 포스트삭제_작성자와_삭제하려는_사람이_다른_경우_실패() throws Exception {
+        // given
+        Long postId = 1L;
+
+        // mocking
+        doThrow(new SnsApplicationException(ErrorCode.INVALID_PERMISSION)).when(postService).delete(any(), any());
+
+        // expected
+        mockMvc.perform(delete("/api/v1/posts/" + postId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser
+    void 포스트삭제_삭제하려는_포스트가_존재하지_않는_경우_실패() throws Exception {
+        // given
+        Long postId = 1L;
+
+        // mocking
+        doThrow(new SnsApplicationException(ErrorCode.POST_NOT_FOUND)).when(postService).delete(any(), any());
+
+        // expected
+        mockMvc.perform(delete("/api/v1/posts/" + postId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().is(ErrorCode.POST_NOT_FOUND.getStatus().value()));
+    }
 }
