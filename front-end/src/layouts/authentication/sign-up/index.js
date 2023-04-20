@@ -52,7 +52,7 @@ const Transition = React.forwardRef(function Transition(
 });
 
 function Cover() {
-  const [username, setUsername] = useState('');
+  const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [open, setOpen] = React.useState(false);
   const [dialogTitle, setDialogTitle] = React.useState('');
@@ -67,14 +67,14 @@ function Cover() {
   };
 
   const handleSignUp = (event) => {
-    console.log(username);
+    console.log(userName);
     console.log(password);
 
     axios({
       url: '/api/v1/users/join',
       method: 'POST',
       data: {
-        name: username,
+        username: userName,
         password: password,
       },
     })

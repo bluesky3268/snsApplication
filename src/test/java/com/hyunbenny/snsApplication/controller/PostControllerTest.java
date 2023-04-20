@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -195,4 +196,57 @@ public class PostControllerTest {
                 .andDo(print())
                 .andExpect(status().is(ErrorCode.POST_NOT_FOUND.getStatus().value()));
     }
+
+    @Test
+    @WithMockUser
+    void 피드목록_조회_성공() throws Exception {
+        // given
+        when(postService.getFeeds(any())).thenReturn(Page.empty());
+
+        // expected
+        mockMvc.perform(get("/api/v1/posts")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void 피드목록_로그인하지않은_경우_실패() throws Exception {
+        // given
+        when(postService.getFeeds(any())).thenReturn(Page.empty());
+
+        // expected
+        mockMvc.perform(delete("/api/v1/posts")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser
+    void 나의포스트목록_조회_성공() throws Exception {
+        // given
+        when(postService.getMyPosts(any(), any())).thenReturn(Page.empty());
+
+        // expected
+        mockMvc.perform(get("/api/v1/posts/my")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void 나의포스트목록_로그인하지않은_경우_실패() throws Exception {
+        // given
+        when(postService.getMyPosts(any(), any())).thenReturn(Page.empty());
+
+        // expected
+        mockMvc.perform(delete("/api/v1/posts/my")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
 }
