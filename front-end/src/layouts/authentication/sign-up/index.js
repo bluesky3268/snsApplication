@@ -74,7 +74,7 @@ function Cover() {
       url: '/api/v1/users/join',
       method: 'POST',
       data: {
-        username: userName,
+        name: userName,
         password: password,
       },
     })
@@ -116,9 +116,9 @@ function Cover() {
                 <MDBox component="form" role="form">
                   <MDBox mb={2}>
                     <MDInput
-                      type="username"
+                      type="userName"
                       label="User Name"
-                      onChange={(v) => setUsername(v.target.value)}
+                      onChange={(v) => setUserName(v.target.value)}
                       fullWidth
                     />
                   </MDBox>
