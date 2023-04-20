@@ -9,6 +9,7 @@ import org.hibernate.annotations.Where;
 import javax.persistence.*;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Objects;
 
 @Entity
 @Table(name = "\"user\"")
@@ -49,6 +50,13 @@ public class UserEntity {
         createdAt();
     }
 
+    public UserEntity(Long id, String username, String password) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        createdAt();
+    }
+
     @PrePersist
     public void createdAt() {
         this.createdAt = Timestamp.from(Instant.now());
@@ -64,13 +72,25 @@ public class UserEntity {
         return userEntity;
     }
 
-    public void setIdForTest(Long id) {
-        this.id = id;
+    public static UserEntity of(Long id, String username, String password) {
+        UserEntity userEntity = new UserEntity(id, username, password);
+        return userEntity;
     }
-    public void setUsernameForTest(String username) {this.username = username;}
+
     public void changePassword(String password) {this.password = password;}
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserEntity that = (UserEntity) o;
+        return Objects.equals(this.getId(), that.getId());
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getId());
+    }
 
     @Override
     public String toString() {

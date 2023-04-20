@@ -26,4 +26,21 @@ public class JwtTokenUtils {
         byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+    public static String getUsername(String token, String key) {
+        return extractClaimsFromToken(token, key).get("username", String.class);
+    }
+
+    public static boolean isExpiredToken(String token, String key) {
+        Date expirationDate = extractClaimsFromToken(token, key).getExpiration();
+        return expirationDate.before(new Date());
+    }
+
+    private static Claims extractClaimsFromToken(String token, String key) {
+        return Jwts.parserBuilder()
+                    .setSigningKey(getKey(key))
+                    .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
 }

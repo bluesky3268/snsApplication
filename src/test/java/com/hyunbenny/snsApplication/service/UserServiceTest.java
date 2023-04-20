@@ -38,7 +38,7 @@ public class UserServiceTest {
 
         when(userEntityRepository.findByUsername(username)).thenReturn(Optional.empty());
         when(bCryptPasswordEncoder.encode(password)).thenReturn("encrypted_password");
-        when(userEntityRepository.save(any())).thenReturn(UserFixture.getUserEntity(username, password));
+        when(userEntityRepository.save(any())).thenReturn(UserFixture.getUserEntity(1L, username, password));
 
         Assertions.assertDoesNotThrow(() -> userService.join(username, password));
     }
@@ -47,7 +47,7 @@ public class UserServiceTest {
     void 회원가입시_해당_username이_이미_존재하는_경우() {
         String username = "testUser";
         String password = "testPassword";
-        UserEntity fixture = UserFixture.getUserEntity(username, password);
+        UserEntity fixture = UserFixture.getUserEntity(1L, username, password);
 
 
         when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(fixture));
@@ -64,7 +64,7 @@ public class UserServiceTest {
         String username = "testUser";
         String password = "testPassword";
 
-        UserEntity fixture = UserFixture.getUserEntity(username, password);
+        UserEntity fixture = UserFixture.getUserEntity(1L, username, password);
 
         when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(fixture));
         when(bCryptPasswordEncoder.matches(password, fixture.getPassword())).thenReturn(true);
@@ -90,7 +90,7 @@ public class UserServiceTest {
         String password = "testPassword";
         String wrongPassword = "wrongPassword";
 
-        UserEntity fixture = UserFixture.getUserEntity(username, password);
+        UserEntity fixture = UserFixture.getUserEntity(1L, username, password);
 
         when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(fixture));
 
