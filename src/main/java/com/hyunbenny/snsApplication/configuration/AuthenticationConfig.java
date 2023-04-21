@@ -22,11 +22,11 @@ public class AuthenticationConfig extends WebSecurityConfigurerAdapter {
     @Value("${jwt.token.secretKey}")
     private String key;
 
-//    @Override
-//    public void configure(WebSecurity web) throws Exception {
-//        web.ignoring().regexMatchers("^(?!/api/).*");
-//
-//    }
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        // /api/ 로 시작하는 요청들만 통과를 시키고 아닌 경우는 무시한다.
+        web.ignoring().regexMatchers("^(?!/api/).*");
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
