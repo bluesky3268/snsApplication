@@ -8,8 +8,10 @@ import com.hyunbenny.snsApplication.controller.response.Response;
 import com.hyunbenny.snsApplication.exception.ErrorCode;
 import com.hyunbenny.snsApplication.exception.SnsApplicationException;
 import com.hyunbenny.snsApplication.fixture.PostFixture;
+import com.hyunbenny.snsApplication.fixture.UserFixture;
 import com.hyunbenny.snsApplication.model.Post;
 import com.hyunbenny.snsApplication.model.entity.PostEntity;
+import com.hyunbenny.snsApplication.model.entity.UserEntity;
 import com.hyunbenny.snsApplication.service.PostService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -247,6 +249,64 @@ public class PostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser
+    void 좋아요_버튼_클릭시_성공() throws Exception {
+        // given
+        Long postId = 1L;
+
+        // expected
+        mockMvc.perform(post("/api/v1/posts/" + postId + "/likes")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void 좋아요_버튼_클릭시_로그인하지않은_경우_실패() throws Exception {
+        // given
+        Long postId = 1L;
+
+        // expected
+        mockMvc.perform(post("/api/v1/posts/" + postId + "/likes")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser
+    void 좋아요_버튼_클릭시_해당_게시물이_없는_경우_실패() throws Exception {
+        // given
+        Long postId = 1L;
+        UserEntity user = UserFixture.getUserEntity(1L, "user", "password");
+
+        doThrow(new SnsApplicationException(ErrorCode.POST_NOT_FOUND)).when(postService).likes(postId, "user");
+
+        // expected
+        mockMvc.perform(post("/api/v1/posts/" + postId + "/likes")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    void 좋아요_버튼_클릭시_이미_좋아요를_누른_경우_실패() throws Exception {
+        // given
+        Long postId = 1L;
+        UserEntity user = UserFixture.getUserEntity(1L, "user", "password");
+
+        doThrow(new SnsApplicationException(ErrorCode.ALREADY_LIKED)).when(postService).likes(postId, "user");
+
+        // expected
+        mockMvc.perform(post("/api/v1/posts/" + postId + "/likes")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isConflict());
     }
 
 }
