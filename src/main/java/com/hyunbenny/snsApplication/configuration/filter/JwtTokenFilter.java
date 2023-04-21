@@ -35,7 +35,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         }
 
         try {
-            final String token = header.split(" ")[1].trim();
+            final String token = extractTokenFromHeader(header);
+            log.debug("token : {}", token);
             if (JwtTokenUtils.isExpiredToken(token, key)) {
                 log.error("token is expired");
                 filterChain.doFilter(request, response);
@@ -58,5 +59,12 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
 
+    }
+
+    private String extractTokenFromHeader(String header) {
+        String[] splitHeader = header.split(" ");
+        if(splitHeader.length > 1) return splitHeader[1].trim();
+
+        return "";
     }
 }

@@ -37,7 +37,7 @@ public class PostController {
     @PostMapping
     public Response<Void> createPost(@RequestBody PostCreateRequest request,
                                      Authentication authentication) {
-        postService.create(request.getTitle(), request.getContent(), authentication.getName());
+        postService.create(request.getTitle(), request.getBody(), authentication.getName());
         return Response.success();
     }
 
@@ -45,7 +45,7 @@ public class PostController {
     public Response<PostModifyResponse> modifyPost(@PathVariable Long postId,
                                      @RequestBody PostModifyRequest request,
                                      Authentication authentication) {
-        Post post = postService.modify(postId, request.getTitle(), request.getContent(), authentication.getName());
+        Post post = postService.modify(postId, request.getTitle(), request.getBody(), authentication.getName());
         return Response.success(PostModifyResponse.fromPost(post));
     }
 

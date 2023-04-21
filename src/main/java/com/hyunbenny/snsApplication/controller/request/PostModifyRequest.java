@@ -7,6 +7,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class PostModifyRequest {
     private String title;
-    private String content;
+    private String body;
 
 }
