@@ -1,7 +1,9 @@
 package com.hyunbenny.snsApplication.controller;
 
+import com.hyunbenny.snsApplication.controller.request.PostCommentRequest;
 import com.hyunbenny.snsApplication.controller.request.PostCreateRequest;
 import com.hyunbenny.snsApplication.controller.request.PostModifyRequest;
+import com.hyunbenny.snsApplication.controller.response.CommentResponse;
 import com.hyunbenny.snsApplication.controller.response.PostModifyResponse;
 import com.hyunbenny.snsApplication.controller.response.PostResponse;
 import com.hyunbenny.snsApplication.controller.response.Response;
@@ -66,6 +68,21 @@ public class PostController {
     public Response<Void> likes(@PathVariable Long postId,
                              Authentication authentication) {
         postService.likes(postId, authentication.getName());
+        return Response.success();
+    }
+
+    @GetMapping("/{postId}/comments")
+    public Response<Page<?>> comments(@PathVariable Long postId,
+                                   Pageable pageable,
+                                   Authentication authentication) {
+        return Response.success(postService.getComments(postId, pageable).map(comment -> CommentResponse.fromPost(comment)));
+    }
+
+    @PostMapping("/{postId}/comments")
+    public Response<Void> comments(@PathVariable Long postId,
+                                   @RequestBody PostCommentRequest request,
+                                   Authentication authentication) {
+        postService.createComment(postId, request.getComment(), authentication.getName());
         return Response.success();
     }
 
