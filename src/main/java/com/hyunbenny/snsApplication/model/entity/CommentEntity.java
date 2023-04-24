@@ -10,11 +10,13 @@ import java.time.Instant;
 import java.util.Objects;
 
 @Entity
-@Table(name = "\"like\"")
+@Table(name = "\"comment\"", indexes = {
+        @Index(name = "comment_entity_post_id_idx", columnList = "post_id")
+})
 @Getter
-@SQLDelete(sql = "UPDATE \"like\" SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE \"comment\" SET deleted_at = NOW() WHERE id = ?")
 @Where(clause = "deleted_at IS NULL")
-public class LikeEntity {
+public class CommentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +25,9 @@ public class LikeEntity {
     @ManyToOne
     @JoinColumn(name = "post_id")
     private PostEntity post;
+
+    @Column(name = "comment")
+    private String comment;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -47,34 +52,36 @@ public class LikeEntity {
         this.updatedAt = Timestamp.from(Instant.now());
     }
 
-    public LikeEntity() {}
+    public CommentEntity() {}
 
-    public LikeEntity(PostEntity post, UserEntity user) {
+    public CommentEntity(PostEntity post, String comment, UserEntity user) {
         this.post = post;
+        this.comment = comment;
         this.user = user;
         createdAt();
     }
 
-    public LikeEntity(Long id, PostEntity post, UserEntity user) {
+    public CommentEntity(Long id, PostEntity post, String comment, UserEntity user) {
         this.id = id;
         this.post = post;
+        this.comment = comment;
         this.user = user;
         createdAt();
     }
 
-    public static LikeEntity of(PostEntity post, UserEntity user) {
-        return new LikeEntity(post, user);
+    public static CommentEntity of(PostEntity post, String comment, UserEntity user) {
+        return new CommentEntity(post, comment, user);
     }
 
-    public static LikeEntity of(Long id, PostEntity post, UserEntity user) {
-        return new LikeEntity(id, post, user);
+    public static CommentEntity of(Long id, PostEntity post, String comment, UserEntity user) {
+        return new CommentEntity(id, post, comment, user);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        LikeEntity that = (LikeEntity) o;
+        CommentEntity that = (CommentEntity) o;
         return Objects.equals(this.getId(), that.getId());
     }
 

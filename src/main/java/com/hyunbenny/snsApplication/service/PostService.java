@@ -2,10 +2,13 @@ package com.hyunbenny.snsApplication.service;
 
 import com.hyunbenny.snsApplication.exception.ErrorCode;
 import com.hyunbenny.snsApplication.exception.SnsApplicationException;
+import com.hyunbenny.snsApplication.model.Comment;
 import com.hyunbenny.snsApplication.model.Post;
+import com.hyunbenny.snsApplication.model.entity.CommentEntity;
 import com.hyunbenny.snsApplication.model.entity.LikeEntity;
 import com.hyunbenny.snsApplication.model.entity.PostEntity;
 import com.hyunbenny.snsApplication.model.entity.UserEntity;
+import com.hyunbenny.snsApplication.repository.CommentEntityRepository;
 import com.hyunbenny.snsApplication.repository.LikeEntityRepository;
 import com.hyunbenny.snsApplication.repository.PostEntityRepository;
 import com.hyunbenny.snsApplication.repository.UserEntityRepository;
@@ -26,12 +29,12 @@ public class PostService {
     private final PostEntityRepository postEntityRepository;
     private final UserEntityRepository userEntityRepository;
     private final LikeEntityRepository likeEntityRepository;
+    private final CommentEntityRepository commentEntityRepository;
 
     @Transactional
     public void create(String title, String content, String username) {
         // 유저를 찾아서 없으면 예외
-        UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(() ->
-                new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username)));
+        UserEntity userEntity = getUserOrElsException(username);
 
         // 게시글 저장
         postEntityRepository.save(PostEntity.of(title, content, userEntity));
@@ -40,12 +43,10 @@ public class PostService {
     @Transactional
     public Post modify(Long postId, String title, String content, String username) {
         // 유저가 있는 지 확인
-        UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(() ->
-                new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username)));
+        UserEntity userEntity =getUserOrElsException(username);
         
         // 게시글이 존재하는 지 확인
-        PostEntity postEntity = postEntityRepository.findById(postId).orElseThrow(() ->
-                new SnsApplicationException(ErrorCode.POST_NOT_FOUND, String.format("%s not found", postId)));
+        PostEntity postEntity = getPostOrElsException(postId);
 
         // 게시글 작성자 == username 확인
         if (postEntity.getUser() != userEntity) {
@@ -61,12 +62,10 @@ public class PostService {
     @Transactional
     public void delete(Long postId, String username) {
         // 유저가 있는 지 확인
-        UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(() ->
-                new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username)));
+        UserEntity userEntity = getUserOrElsException(username);
 
         // 게시글이 존재하는 지 확인
-        PostEntity postEntity = postEntityRepository.findById(postId).orElseThrow(() ->
-                new SnsApplicationException(ErrorCode.POST_NOT_FOUND, String.format("%s not found", postId)));
+        PostEntity postEntity = getPostOrElsException(postId);
 
 //         게시글 작성자 == username 확인
         if (postEntity.getUser() != userEntity) {
@@ -85,8 +84,7 @@ public class PostService {
     @Transactional
     public Page<Post> getMyPosts(String username, Pageable pageable) {
         // 유저가 있는 지 확인
-        UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(() ->
-                new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username)));
+        UserEntity userEntity = getUserOrElsException(username);
 
         // 유저가 있으면 해당 유저가 작성한 포스트 모두 가져오기
         Page<PostEntity> myPosts = postEntityRepository.findAllByUser(userEntity, pageable);
@@ -97,8 +95,7 @@ public class PostService {
     @Transactional
     public long likesCount(Long postId) {
         // 게시글이 존재하는 지 확인
-        PostEntity postEntity = postEntityRepository.findById(postId).orElseThrow(() ->
-                new SnsApplicationException(ErrorCode.POST_NOT_FOUND, String.format("%s not found", postId)));
+        PostEntity postEntity = getPostOrElsException(postId);
 
         return likeEntityRepository.countByPost(postEntity).longValue();
     }
@@ -106,12 +103,10 @@ public class PostService {
     @Transactional
     public void likes(Long postId, String username) {
         // 유저가 있는 지 확인
-        UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(() ->
-                new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username)));
+        UserEntity userEntity = getUserOrElsException(username);
 
         // 게시글이 존재하는 지 확인
-        PostEntity postEntity = postEntityRepository.findById(postId).orElseThrow(() ->
-                new SnsApplicationException(ErrorCode.POST_NOT_FOUND, String.format("%s not found", postId)));
+        PostEntity postEntity = getPostOrElsException(postId);
 
         // 해당 게시글에 이미 좋아요를 눌럿는지 확인 -> 이미 좋아요를 누른 경우 취소(좋아요 삭제)하기
         Optional<LikeEntity> likeEntity = likeEntityRepository.findByPostAndUser(postEntity, userEntity);
@@ -121,5 +116,34 @@ public class PostService {
 
         // 누르지 않았으면 저장
         likeEntity.orElseGet(() -> likeEntityRepository.save(LikeEntity.of(postEntity, userEntity)));
+    }
+
+    public Page<Comment> getComments(Long postId, Pageable pageable) {
+        PostEntity postEntity = getPostOrElsException(postId);
+        return commentEntityRepository.findAllByPost(postEntity, pageable).map(entity -> Comment.fromCommentEntity(entity));
+    }
+
+    @Transactional
+    public void createComment(Long postId, String comment, String username) {
+        // 유저가 있는 지 확인
+        UserEntity userEntity = getUserOrElsException(username);
+
+        // 게시글이 존재하는 지 확인
+        PostEntity postEntity = getPostOrElsException(postId);
+
+        // 댓글 저장
+        commentEntityRepository.save(CommentEntity.of(postEntity, comment, userEntity));
+    }
+
+    private PostEntity getPostOrElsException(Long postId) {
+        // 게시글이 존재하는 지 확인
+        return postEntityRepository.findById(postId).orElseThrow(() ->
+                new SnsApplicationException(ErrorCode.POST_NOT_FOUND, String.format("%s not found", postId)));
+    }
+
+    private UserEntity getUserOrElsException(String username) {
+        // 유저가 있는 지 확인
+        return userEntityRepository.findByUsername(username).orElseThrow(() ->
+                new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username)));
     }
 }
