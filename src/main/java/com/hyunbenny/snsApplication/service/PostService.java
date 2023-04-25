@@ -4,14 +4,10 @@ import com.hyunbenny.snsApplication.exception.ErrorCode;
 import com.hyunbenny.snsApplication.exception.SnsApplicationException;
 import com.hyunbenny.snsApplication.model.Comment;
 import com.hyunbenny.snsApplication.model.Post;
-import com.hyunbenny.snsApplication.model.entity.CommentEntity;
-import com.hyunbenny.snsApplication.model.entity.LikeEntity;
-import com.hyunbenny.snsApplication.model.entity.PostEntity;
-import com.hyunbenny.snsApplication.model.entity.UserEntity;
-import com.hyunbenny.snsApplication.repository.CommentEntityRepository;
-import com.hyunbenny.snsApplication.repository.LikeEntityRepository;
-import com.hyunbenny.snsApplication.repository.PostEntityRepository;
-import com.hyunbenny.snsApplication.repository.UserEntityRepository;
+import com.hyunbenny.snsApplication.model.alarm.AlarmArgs;
+import com.hyunbenny.snsApplication.model.alarm.AlarmType;
+import com.hyunbenny.snsApplication.model.entity.*;
+import com.hyunbenny.snsApplication.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -30,6 +26,8 @@ public class PostService {
     private final UserEntityRepository userEntityRepository;
     private final LikeEntityRepository likeEntityRepository;
     private final CommentEntityRepository commentEntityRepository;
+    private final AlarmEntityRepository alarmEntityRepository;
+
 
     @Transactional
     public void create(String title, String content, String username) {
@@ -114,8 +112,12 @@ public class PostService {
             likeEntityRepository.deleteById(like.getId());
         });
 
-        // 누르지 않았으면 저장
-        likeEntity.orElseGet(() -> likeEntityRepository.save(LikeEntity.of(postEntity, userEntity)));
+        // 누르지 않았으면 저장 후 알람 등록
+        if (likeEntity.isEmpty()) {
+            likeEntityRepository.save(LikeEntity.of(postEntity, userEntity));
+            alarmEntityRepository.save(AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_LIKE_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
+        }
+
     }
 
     public Page<Comment> getComments(Long postId, Pageable pageable) {
@@ -133,6 +135,10 @@ public class PostService {
 
         // 댓글 저장
         commentEntityRepository.save(CommentEntity.of(postEntity, comment, userEntity));
+
+        // 알람 등록
+        alarmEntityRepository.save(AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_COMMENT_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
+
     }
 
     private PostEntity getPostOrElsException(Long postId) {
