@@ -2,12 +2,17 @@ package com.hyunbenny.snsApplication.service;
 
 import com.hyunbenny.snsApplication.exception.ErrorCode;
 import com.hyunbenny.snsApplication.exception.SnsApplicationException;
+import com.hyunbenny.snsApplication.model.Alarm;
 import com.hyunbenny.snsApplication.model.User;
+import com.hyunbenny.snsApplication.model.entity.AlarmEntity;
 import com.hyunbenny.snsApplication.model.entity.UserEntity;
+import com.hyunbenny.snsApplication.repository.AlarmEntityRepository;
 import com.hyunbenny.snsApplication.repository.UserEntityRepository;
 import com.hyunbenny.snsApplication.util.JwtTokenUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +24,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserEntityRepository userEntityRepository;
+    private final AlarmEntityRepository alarmEntityRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Value("${jwt.token.secretKey}")
@@ -58,5 +64,13 @@ public class UserService {
         
         // 토큰 생성
         return JwtTokenUtils.generateToken(username, secretKey, expiredMs);
+    }
+
+    public Page<Alarm> alarmList(String username, Pageable pageable) {
+        // 가입한 유저인지 확인
+        UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(()
+                -> new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username)));
+
+        return alarmEntityRepository.findAllByUser(userEntity, pageable).map(entity -> Alarm.fromEntity(entity));
     }
 }
