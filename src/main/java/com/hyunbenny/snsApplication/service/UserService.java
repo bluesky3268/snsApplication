@@ -66,11 +66,7 @@ public class UserService {
         return JwtTokenUtils.generateToken(username, secretKey, expiredMs);
     }
 
-    public Page<Alarm> alarmList(String username, Pageable pageable) {
-        // 가입한 유저인지 확인
-        UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(()
-                -> new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username)));
-
-        return alarmEntityRepository.findAllByUser(userEntity, pageable).map(entity -> Alarm.fromEntity(entity));
+    public Page<Alarm> alarmList(Long userId, Pageable pageable) {
+        return alarmEntityRepository.findAllByUserId(userId, pageable).map(entity -> Alarm.fromEntity(entity));
     }
 }

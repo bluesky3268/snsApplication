@@ -71,6 +71,8 @@ public class PostService {
         }
 
         // 삭제
+        likeEntityRepository.deleteAllByPost(postEntity);
+        commentEntityRepository.deleteAllByPost(postEntity);
         postEntityRepository.deleteById(postId);
     }
 
@@ -122,7 +124,7 @@ public class PostService {
 
     public Page<Comment> getComments(Long postId, Pageable pageable) {
         PostEntity postEntity = getPostOrElsException(postId);
-        return commentEntityRepository.findAllByPost(postEntity, pageable).map(entity -> Comment.fromCommentEntity(entity));
+        return commentEntityRepository.findAllByPostId(postEntity, pageable).map(entity -> Comment.fromCommentEntity(entity));
     }
 
     @Transactional
