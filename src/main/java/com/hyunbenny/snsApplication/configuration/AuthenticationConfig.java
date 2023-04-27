@@ -25,14 +25,15 @@ public class AuthenticationConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(WebSecurity web) throws Exception {
         // /api/ 로 시작하는 요청들만 통과를 시키고 아닌 경우는 무시한다.
-        web.ignoring().regexMatchers("^(?!/api/).*");
+        web.ignoring().regexMatchers("^(?!/api/).*")
+                .antMatchers("/api/*/users/join", "/api/*/users/login"); // 토큰 필터 적용을 제외하기 위해서 아래에 있던 걸 여기로 옮김(라인을 지우지 않고 주석처리 함)
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeHttpRequests()
-                .antMatchers("/api/*/users/join", "/api/*/users/login").permitAll()
+//                .antMatchers("/api/*/users/join", "/api/*/users/login").permitAll()
                 .antMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
 

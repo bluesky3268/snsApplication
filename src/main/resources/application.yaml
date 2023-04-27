@@ -16,6 +16,8 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+  redis:
+    url: redis://:pf34f21243ff91a3d4fada03dbaed9e363631e4945e4314bec3b44a35ceea8c23@ec2-54-145-215-74.compute-1.amazonaws.com:24709
 
 jwt:
   token:
