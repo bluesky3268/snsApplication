@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 public interface CommentEntityRepository extends JpaRepository<CommentEntity, Long> {
 
-    Page<CommentEntity> findAllByPostId(PostEntity postEntity, Pageable pageable);
+    Page<CommentEntity> findAllByPost(PostEntity postEntity, Pageable pageable);
 
 //    void deleteAllByPost(PostEntity postEntity); // 그냥 delete 쿼리만 날리는 게 아니라 영속성 관리를 위해서 데이터를 다 가지고 와서 삭제를 한다.(굳이 가지고 올 필요가 없는데 비효율적이지 않니..?)
 
