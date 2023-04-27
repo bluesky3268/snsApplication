@@ -27,7 +27,7 @@ public class PostService {
     private final LikeEntityRepository likeEntityRepository;
     private final CommentEntityRepository commentEntityRepository;
     private final AlarmEntityRepository alarmEntityRepository;
-
+    private final AlarmService alarmService;
 
     @Transactional
     public void create(String title, String content, String username) {
@@ -111,20 +111,24 @@ public class PostService {
         // 해당 게시글에 이미 좋아요를 눌럿는지 확인 -> 이미 좋아요를 누른 경우 취소(좋아요 삭제)하기
         Optional<LikeEntity> likeEntity = likeEntityRepository.findByPostAndUser(postEntity, userEntity);
         likeEntity.ifPresent(like -> {
+            log.info("already hit the like -> cancel like");
             likeEntityRepository.deleteById(like.getId());
         });
 
-        // 누르지 않았으면 저장 후 알람 등록
+        // 기존에 누르지 않았으면 저장 후 알람 등록
         if (likeEntity.isEmpty()) {
-            likeEntityRepository.save(LikeEntity.of(postEntity, userEntity));
+            LikeEntity savedLikeEntity = likeEntityRepository.save(LikeEntity.of(postEntity, userEntity));
             alarmEntityRepository.save(AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_LIKE_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
+
+            // 알람 발생 브라우저에 알리기
+            alarmService.send(savedLikeEntity.getId(), postEntity.getUser().getId());
         }
 
     }
 
     public Page<Comment> getComments(Long postId, Pageable pageable) {
         PostEntity postEntity = getPostOrElsException(postId);
-        return commentEntityRepository.findAllByPostId(postEntity, pageable).map(entity -> Comment.fromCommentEntity(entity));
+        return commentEntityRepository.findAllByPost(postEntity, pageable).map(entity -> Comment.fromCommentEntity(entity));
     }
 
     @Transactional
@@ -139,7 +143,10 @@ public class PostService {
         commentEntityRepository.save(CommentEntity.of(postEntity, comment, userEntity));
 
         // 알람 등록
-        alarmEntityRepository.save(AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_COMMENT_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
+        AlarmEntity alarmEntity = alarmEntityRepository.save(AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_COMMENT_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
+
+        // 알람 발생 브라우저에 알리기
+        alarmService.send(alarmEntity.getId(), postEntity.getUser().getId());
 
     }
 
