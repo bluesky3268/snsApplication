@@ -6,8 +6,7 @@ spring.datasource:
   platform: postgres
   driver-class-name: org.postgresql.Driver
 
-spring:
-  jpa:
+spring.jpa:
     database: postgresql
     hibernate:
       dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -16,8 +15,45 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
-  redis:
+
+# redis 설정 정보
+spring.redis:
     url: redis://:pf34f21243ff91a3d4fada03dbaed9e363631e4945e4314bec3b44a35ceea8c23@ec2-54-145-215-74.compute-1.amazonaws.com:24709
+
+# kafka 설정 정보
+spring.kafka:
+    # karafka를 사용하기 위한 설정
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: SCRAM-SHA-256
+      sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="kpzaisvs" password="v_hHfaOQvm7y2a3JgXHmej311-1cg6Hx";
+
+    consumer:
+      bootstrap-servers: moped.srvs.cloudkafka.com:9094
+      group-id: kpzaisvs-alarm
+      auto-offset-reset: latest # 프로듀싱되고 있는 토픽에서 새로운 컨슈머가 뜨면 브로커에 있는 메시지들을 처음부터 쭉 읽을지, 가장 마지막에 있는 메시지부터 읽을지
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.LongDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+
+#      key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+#      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    listener:
+        ack-mode: MANUAL
+
+    producer:
+      bootstrap-servers: moped.srvs.cloudkafka.com:9094
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        enable.idempotence: false
+
+    topic:
+      alarm: kpzaisvs-alarm
+
 
 jwt:
   token:
