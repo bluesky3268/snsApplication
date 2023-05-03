@@ -7,6 +7,8 @@ import com.hyunbenny.snsApplication.model.Post;
 import com.hyunbenny.snsApplication.model.alarm.AlarmArgs;
 import com.hyunbenny.snsApplication.model.alarm.AlarmType;
 import com.hyunbenny.snsApplication.model.entity.*;
+import com.hyunbenny.snsApplication.model.event.AlarmEvent;
+import com.hyunbenny.snsApplication.producer.AlarmProducer;
 import com.hyunbenny.snsApplication.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class PostService {
     private final CommentEntityRepository commentEntityRepository;
     private final AlarmEntityRepository alarmEntityRepository;
     private final AlarmService alarmService;
+    private final AlarmProducer alarmProducer;
 
     @Transactional
     public void create(String title, String content, String username) {
@@ -118,10 +121,10 @@ public class PostService {
         // 기존에 누르지 않았으면 저장 후 알람 등록
         if (likeEntity.isEmpty()) {
             LikeEntity savedLikeEntity = likeEntityRepository.save(LikeEntity.of(postEntity, userEntity));
-            alarmEntityRepository.save(AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_LIKE_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
+//            alarmEntityRepository.save(AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_LIKE_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
 
-            // 알람 발생 브라우저에 알리기
-            alarmService.send(savedLikeEntity.getId(), postEntity.getUser().getId());
+            // 알람 이벤트 발생
+            alarmProducer.send(new AlarmEvent(postEntity.getUser().getId(), AlarmType.NEW_LIKE_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
         }
 
     }
@@ -141,12 +144,15 @@ public class PostService {
 
         // 댓글 저장
         commentEntityRepository.save(CommentEntity.of(postEntity, comment, userEntity));
+        log.info("댓글 저장 완료");
 
         // 알람 등록
-        AlarmEntity alarmEntity = alarmEntityRepository.save(AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_COMMENT_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
+//        alarmEntityRepository.save(AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_COMMENT_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
+//        log.info("알람 등록 완료");
 
         // 알람 발생 브라우저에 알리기
-        alarmService.send(alarmEntity.getId(), postEntity.getUser().getId());
+        log.info("카프카 프로듀서(alarmProducer) send() 호출");
+        alarmProducer.send(new AlarmEvent(postEntity.getUser().getId(), AlarmType.NEW_COMMENT_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
 
     }
 

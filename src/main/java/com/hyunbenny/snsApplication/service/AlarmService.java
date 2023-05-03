@@ -2,13 +2,21 @@ package com.hyunbenny.snsApplication.service;
 
 import com.hyunbenny.snsApplication.exception.ErrorCode;
 import com.hyunbenny.snsApplication.exception.SnsApplicationException;
+import com.hyunbenny.snsApplication.model.AlarmNoti;
+import com.hyunbenny.snsApplication.model.alarm.AlarmArgs;
+import com.hyunbenny.snsApplication.model.alarm.AlarmType;
+import com.hyunbenny.snsApplication.model.entity.AlarmEntity;
+import com.hyunbenny.snsApplication.model.entity.UserEntity;
+import com.hyunbenny.snsApplication.repository.AlarmEntityRepository;
 import com.hyunbenny.snsApplication.repository.EmitterRepository;
+import com.hyunbenny.snsApplication.repository.UserEntityRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -18,16 +26,28 @@ public class AlarmService {
     private final static Long DEFAULT_TIME_OUT = 60L * 1000 * 60;
     private final static String ALARM_NAME = "alarm";
     private final EmitterRepository emitterRepository;
+    private final AlarmEntityRepository alarmEntityRepository;
+    private final UserEntityRepository userEntityRepository;
 
 
-    public void send(Long alarmId, Long userId) {
+    public void send(AlarmType alarmType, AlarmArgs alarmArgs, Long receiveUserId) {
+        log.info("AlarmService send() : 클라이언트에 알람 보내기");
+        UserEntity userEntity = userEntityRepository.findById(receiveUserId).orElseThrow(() -> new SnsApplicationException(ErrorCode.USER_NOT_FOUND));
+
+        // alarm save
+        AlarmEntity alarmEntity = alarmEntityRepository.save(AlarmEntity.of(userEntity, alarmType, alarmArgs));
+
+
         // sse가 브라우저당 하나당 생기는데 서버단에서는 누구한테 알람이 왔는지 찾아서 보내줘야 한다.
         // 그러기 위해서는 서버측에 저장을 해둬야 하는데 이를 위한 클래스가 -> EmitterRepository(로컬리포지토리)
-        emitterRepository.get(userId).ifPresentOrElse(sseEmitter -> {
+        emitterRepository.get(receiveUserId).ifPresentOrElse(sseEmitter -> {
             try{
-                sseEmitter.send(SseEmitter.event().id(String.valueOf(alarmId)).name(ALARM_NAME).data("new alarm"));
+                sseEmitter.send(SseEmitter.event()
+                        .id(String.valueOf(alarmEntity.getId()))
+                        .name(ALARM_NAME)
+                        .data("new alarm"));
             } catch (IOException e) {
-                emitterRepository.delete(userId);
+                emitterRepository.delete(receiveUserId);
                 throw new SnsApplicationException(ErrorCode.ALARM_CONNECT_ERROR);
             }
         }, () -> log.info("no emmitter found"));
@@ -35,6 +55,7 @@ public class AlarmService {
     }
 
     public SseEmitter connectAlarm(Long userId) {
+        log.info("connectAlarm()");
         SseEmitter sseEmitter = new SseEmitter(DEFAULT_TIME_OUT);
         emitterRepository.save(userId, sseEmitter);
 
